@@ -1,0 +1,101 @@
+
+# 1. Import required libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+# 2. Create sample dataset
+np.random.seed(42)
+
+data = pd.DataFrame({
+    'Distance': np.random.randint(10, 500, 1000),
+    'Vehicles': np.random.randint(1, 20, 1000),
+    'Speed': np.random.randint(20, 120, 1000),
+    'Mileage': np.random.uniform(8, 25, 1000)
+})
+
+# 3. Calculate petrol consumption
+data['Petrol'] = (
+    data['Distance'] * data['Vehicles'] / data['Mileage']
+) * (1 + abs(data['Speed'] - 60) * 0.0015)
+
+print(data.head())
+
+# 4. Separate input and output
+X = data[['Distance', 'Vehicles', 'Speed', 'Mileage']]
+y = data['Petrol']
+
+# 5. Split dataset into training and testing
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# 6. Normalize input data
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# 7. Build ANN model
+model = Sequential()
+
+# Input layer and first hidden layer
+model.add(Dense(16, input_dim=4, activation='relu'))
+
+# Second hidden layer
+model.add(Dense(8, activation='relu'))
+
+# Output layer
+model.add(Dense(1))
+
+# 8. Compile the model
+model.compile(
+    optimizer='adam',
+    loss='mean_squared_error',
+    metrics=['mae']
+)
+
+# 9. Train the ANN model
+history = model.fit(
+    X_train,
+    y_train,
+    epochs=100,
+    batch_size=16,
+    validation_split=0.2,
+    verbose=1
+)
+
+# 10. Evaluate the model
+loss, mae = model.evaluate(X_test, y_test)
+
+print("Mean Absolute Error:", mae)
+
+# 11. Predict petrol consumption
+new_data = pd.DataFrame({
+    'Distance': [100],
+    'Vehicles': [5],
+    'Speed': [60],
+    'Mileage': [15]
+})
+
+new_data_scaled = scaler.transform(new_data)
+
+prediction = model.predict(new_data_scaled)
+
+print("Predicted Petrol Consumption:",
+      prediction[0][0], "litres")
+
+# 12. Plot training loss
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+
+plt.xlabel('Epochs')
+plt.ylabel('Mean Squared Error')
+plt.title('ANN Training Performance')
+plt.legend()
+plt.show()
