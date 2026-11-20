@@ -1,0 +1,101 @@
+
+# =====================================
+# IMPORTING LIBRARIES
+# =====================================
+
+import cv2
+import numpy as np
+
+
+# =====================================
+# READING AND DISPLAYING IMAGE
+# =====================================
+
+# Read image
+# Keep shapes.png in the same folder as Python file
+
+img = cv2.imread("shapes.png")
+
+# Check whether image is loaded
+if img is None:
+    print("Error: Image not found. Check the image path.")
+    exit()
+
+# Display original image
+cv2.imshow("Original Image", img)
+
+
+# =====================================
+# GRAYSCALE IMAGE
+# =====================================
+
+gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+cv2.imshow("Grayscale Image", gray_img)
+
+
+# =====================================
+# THRESHOLD FUNCTION
+# =====================================
+
+# Threshold function takes the grayscale image
+# and converts it into black and white
+
+# Light -> Black, Dark -> White (for THRESH_BINARY_INV)
+ret, thresh = cv2.threshold(gray_img, 50, 255, cv2.THRESH_BINARY_INV)
+
+cv2.imshow("Threshold Image", thresh)
+
+
+# =====================================
+# FINDING CONTOURS
+# =====================================
+
+# Find contours function goes through the image
+# and finds boundaries of shapes
+
+contours, h = cv2.findContours(
+    thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+)
+
+for cnt in contours:
+
+    # Function identifies points to define our shape
+    approx = cv2.approxPolyDP(
+        cnt, 0.01 * cv2.arcLength(cnt, True), True
+    )
+
+    n = len(approx)
+
+    if n == 6:
+        # This is a hexagon
+        print("We have a hexagon here")
+        cv2.drawContours(img, [approx], 0, (255, 0, 255), 3)
+
+    elif n == 3:
+        # This is a triangle
+        print("We found a triangle")
+        cv2.drawContours(img, [approx], 0, (0, 255, 0), 3)
+
+    elif n > 9:
+        # This is a circle
+        print("We found a circle")
+        cv2.drawContours(img, [approx], 0, (0, 255, 255), 3)
+
+    elif n == 4:
+        # This is a square or rectangle
+        print("We found a square or rectangle")
+        cv2.drawContours(img, [approx], 0, (255, 255, 0), 3)
+
+
+# =====================================
+# DISPLAY FINAL IMAGE
+# =====================================
+
+cv2.imshow("Shape Detection Result", img)
+
+# Wait until a key is pressed
+cv2.waitKey(0)
+
+# Close all image windows
+cv2.destroyAllWindows()
